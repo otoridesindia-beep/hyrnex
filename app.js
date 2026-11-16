@@ -775,6 +775,7 @@ function setAdminVisible(isVisible) {
   if (isVisible) {
     loadContactRequests();
     loadDailyQuestionAdminList();
+    loadUsers();
   }
 }
 
@@ -801,6 +802,43 @@ adminTabs.forEach((tab, index) => {
     }
   });
 });
+
+/* ---------- Registered users (admin) ---------- */
+
+const usersList = document.getElementById('usersList');
+const userCount = document.getElementById('userCount');
+const usersStatus = document.getElementById('usersStatus');
+let registeredUsers = [];
+
+function renderUsers() {
+  userCount.textContent = `(${registeredUsers.length})`;
+  usersList.innerHTML = registeredUsers.map((user) => {
+    const registeredAt = new Date(user.created_at);
+    const joined = Number.isNaN(registeredAt.getTime()) ? 'Registration date unavailable' : registeredAt.toLocaleString();
+    const adminLabel = user.is_admin ? ' · Administrator' : '';
+    return `
+      <div class="admin-list-item">
+        <div>
+          <strong>${escapeHTML(user.name)}</strong>
+          <span class="contact-meta">${escapeHTML(user.email)} · ${escapeHTML(user.mobile)}<br>Joined ${escapeHTML(joined)}${adminLabel}</span>
+        </div>
+      </div>`;
+  }).join('') || '<p class="admin-note">No registered users yet.</p>';
+}
+
+async function loadUsers() {
+  if (!db || !currentProfile?.is_admin) return setStatus(usersStatus, 'Admin sign-in and a database connection are required.', true);
+  setStatus(usersStatus, 'Loading users...');
+  const { data, error } = await db.from('profiles')
+    .select('name, email, mobile, is_admin, created_at')
+    .order('created_at', { ascending: false });
+  if (error) return setStatus(usersStatus, `Could not load users: ${error.message}`, true);
+  registeredUsers = data;
+  setStatus(usersStatus, '');
+  renderUsers();
+}
+
+document.getElementById('refreshUsers').addEventListener('click', loadUsers);
 
 /* ---------- Contact requests (admin) ---------- */
 

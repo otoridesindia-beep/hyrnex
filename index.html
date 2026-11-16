@@ -300,6 +300,7 @@
           <button class="admin-tab is-active" id="tabPost" type="button" role="tab" aria-selected="true" aria-controls="panelPost" data-panel="panelPost">Post a job</button>
           <button class="admin-tab" id="tabManage" type="button" role="tab" aria-selected="false" aria-controls="panelManage" data-panel="panelManage" tabindex="-1">Manage listings</button>
           <button class="admin-tab" id="tabQuestions" type="button" role="tab" aria-selected="false" aria-controls="panelQuestions" data-panel="panelQuestions" tabindex="-1">Daily questions</button>
+          <button class="admin-tab" id="tabUsers" type="button" role="tab" aria-selected="false" aria-controls="panelUsers" data-panel="panelUsers" tabindex="-1">Users</button>
           <button class="admin-tab" id="tabContacts" type="button" role="tab" aria-selected="false" aria-controls="panelContacts" data-panel="panelContacts" tabindex="-1">Contact requests</button>
         </div>
 
@@ -401,6 +402,18 @@
             <div class="admin-list" id="dailyQuestionAdminList"></div>
           </div>
           <p class="admin-note">Questions and answer guides are public on their selected dates. Run <code>supabase-daily-questions.sql</code> in the Supabase SQL Editor to enable publishing.</p>
+        </div>
+
+        <div class="admin-panel" id="panelUsers" role="tabpanel" aria-labelledby="tabUsers" hidden>
+          <div class="admin-list-wrap">
+            <div class="contact-admin-head">
+              <h3>Registered users <span id="userCount"></span></h3>
+              <button class="csv-button" id="refreshUsers" type="button">Refresh users</button>
+            </div>
+            <p class="admin-status" id="usersStatus" role="status" aria-live="polite"></p>
+            <div class="admin-list" id="usersList"></div>
+          </div>
+          <p class="admin-note">All registered users are listed here, with the newest accounts first. Refresh to check for recent sign-ups.</p>
         </div>
 
         <div class="admin-panel" id="panelContacts" role="tabpanel" aria-labelledby="tabContacts" hidden>
