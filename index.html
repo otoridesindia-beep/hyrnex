@@ -66,7 +66,7 @@
             <h2>Your next move <span>starts here.</span></h2>
             <p>Explore IT and non-IT roles by specialty, listing type, and work mode.</p>
           </div>
-          <div class="job-count"><strong id="resultCount">6</strong><span>open roles</span></div>
+          <div class="job-count"><strong id="resultCount">0</strong><span>open roles</span></div>
         </div>
 
         <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="Job category">
@@ -165,6 +165,11 @@
         <div class="jobs-list" id="jobsList" aria-live="polite">
         </div>
         <div class="empty-state" id="emptyState" hidden>No roles match those filters. Try a different search.</div>
+        <nav class="jobs-pagination" id="jobsPagination" aria-label="Job listing pages" hidden>
+          <button class="admin-cancel" id="previousJobsPage" type="button">Previous</button>
+          <span id="jobsPageInfo" role="status" aria-live="polite"></span>
+          <button class="admin-cancel" id="nextJobsPage" type="button">Next</button>
+        </nav>
         <p class="disclaimer">Loading current opportunities…</p>
       </section>
 
@@ -193,7 +198,7 @@
         <div class="job-dialog-header">
           <div>
             <div class="eyebrow section-eyebrow">ROLE DETAILS</div>
-            <h2 id="jobDialogTitle">Job title</h2>
+            <h2 id="jobDialogTitle" tabindex="-1">Job title</h2>
             <p id="jobDialogCompany"></p>
           </div>
           <button class="dialog-close" id="closeJobDialog" type="button" aria-label="Close job details">×</button>
@@ -207,6 +212,10 @@
           <button class="admin-cancel" id="backToJobs" type="button">Back to jobs</button>
           <a class="admin-submit job-apply-button" id="jobDialogApply" href="#">Apply for this role <span aria-hidden="true">↗</span></a>
         </div>
+        <section class="similar-jobs" aria-labelledby="similarJobsHeading">
+          <h3 id="similarJobsHeading">Similar jobs</h3>
+          <div id="similarJobsList"></div>
+        </section>
       </dialog>
 
       <dialog class="job-dialog account-dialog" id="accountDialog" aria-labelledby="accountTitle">

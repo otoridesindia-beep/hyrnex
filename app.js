@@ -16,6 +16,10 @@ INDIAN_STATES.forEach((name) => {
 const jobsList = document.getElementById('jobsList');
 const resultCount = document.getElementById('resultCount');
 const emptyState = document.getElementById('emptyState');
+const jobsPagination = document.getElementById('jobsPagination');
+const jobsPageInfo = document.getElementById('jobsPageInfo');
+const previousJobsPage = document.getElementById('previousJobsPage');
+const nextJobsPage = document.getElementById('nextJobsPage');
 const jobsNotice = document.querySelector('.disclaimer');
 const savedJobsToggle = document.getElementById('savedJobsToggle');
 const savedJobCount = document.getElementById('savedJobCount');
@@ -39,6 +43,7 @@ const jobDialogTitle = document.getElementById('jobDialogTitle');
 const jobDialogCompany = document.getElementById('jobDialogCompany');
 const jobDialogDetails = document.getElementById('jobDialogDetails');
 const jobDialogApply = document.getElementById('jobDialogApply');
+const similarJobsList = document.getElementById('similarJobsList');
 
 const profileToggle = document.getElementById('profileToggle');
 const accountDialog = document.getElementById('accountDialog');
@@ -377,6 +382,8 @@ function jobToRow(job) {
 
 let jobs = [];
 let jobsAreLive = false;
+const JOBS_PER_PAGE = 15;
+let currentJobsPage = 1;
 
 async function fetchJobs() {
   if (!db) {
@@ -418,19 +425,19 @@ function renderJobs() {
         </div>
       </article>`;
   }).join('');
-  filterJobs();
+  filterJobs(false);
   renderAdminList();
 }
 
-function filterJobs() {
+function filterJobs(resetPage = true) {
+  if (resetPage) currentJobsPage = 1;
   const query = searchInput.value.trim().toLowerCase();
   const role = roleFilter.value;
   const location = locationFilter.value;
   const type = typeFilter.value;
   const state = stateFilter.value;
-  let visibleCount = 0;
-
-  jobsList.querySelectorAll('.job-card').forEach((card) => {
+  const cards = Array.from(jobsList.querySelectorAll('.job-card'));
+  const matchingCards = cards.filter((card) => {
     const matchesSearch = !query || card.dataset.search.includes(query);
     const matchesCategory = activeCategory === 'all' || categoryOf(card.dataset.role) === activeCategory;
     const matchesRole = role === 'all' || card.dataset.role === role;
@@ -438,11 +445,19 @@ function filterJobs() {
     const matchesType = type === 'all' || card.dataset.type === type;
     const matchesState = state === 'all' || card.dataset.state === state;
     const matchesSaved = !savedJobsOnly || savedJobIds.has(card.dataset.jobId);
-    const isVisible = matchesSearch && matchesCategory && matchesRole && matchesLocation && matchesType && matchesState && matchesSaved;
-    card.hidden = !isVisible;
-    if (isVisible) visibleCount += 1;
+    return matchesSearch && matchesCategory && matchesRole && matchesLocation && matchesType && matchesState && matchesSaved;
   });
 
+  const visibleCount = matchingCards.length;
+  const pageCount = Math.ceil(visibleCount / JOBS_PER_PAGE);
+  currentJobsPage = Math.min(currentJobsPage, Math.max(pageCount, 1));
+  const start = (currentJobsPage - 1) * JOBS_PER_PAGE;
+  const pageCards = new Set(matchingCards.slice(start, start + JOBS_PER_PAGE));
+  cards.forEach((card) => { card.hidden = !pageCards.has(card); });
+  jobsPagination.hidden = pageCount <= 1;
+  jobsPageInfo.textContent = `Page ${currentJobsPage} of ${pageCount}`;
+  previousJobsPage.disabled = currentJobsPage === 1;
+  nextJobsPage.disabled = currentJobsPage >= pageCount;
   resultCount.textContent = visibleCount;
   emptyState.hidden = visibleCount !== 0;
   if (visibleCount === 0) {
@@ -453,6 +468,19 @@ function filterJobs() {
         : 'No roles match those filters. Try a different search.';
   }
 }
+
+previousJobsPage.addEventListener('click', () => {
+  if (currentJobsPage <= 1) return;
+  currentJobsPage -= 1;
+  filterJobs(false);
+  jobsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+nextJobsPage.addEventListener('click', () => {
+  if (nextJobsPage.disabled) return;
+  currentJobsPage += 1;
+  filterJobs(false);
+  jobsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 function shareJob(job, card) {
   const feedback = card.querySelector('.job-card-share-feedback');
@@ -591,8 +619,27 @@ function openJobDialog(job) {
   const applyLink = safeApplyLink(job.apply);
   jobDialogApply.hidden = !applyLink;
   if (applyLink) jobDialogApply.href = applyLink;
-  jobDialog.showModal();
+  const similarJobs = jobs.filter((item) => item.id !== job.id && item.role === job.role).slice(0, 3);
+  similarJobsList.innerHTML = similarJobs.map((item) => `
+    <button class="similar-job" type="button" data-job-id="${escapeHTML(item.id)}">
+      <strong>${escapeHTML(item.title)}</strong>
+      <span>${escapeHTML(item.company)} · ${escapeHTML(item.place || item.location)}</span>
+    </button>
+  `).join('') || '<p class="admin-note">No similar jobs available right now.</p>';
+  if (!jobDialog.open) jobDialog.showModal();
+  else {
+    jobDialog.scrollTop = 0;
+    jobDialogTitle.focus();
+  }
 }
+
+similarJobsList.addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-job-id]');
+  if (!button) return;
+  const job = jobs.find((item) => String(item.id) === button.dataset.jobId);
+  if (job) openJobDialog(job);
+  else setStatus(jobShareStatus, 'This job is no longer available.', true);
+});
 
 document.getElementById('closeJobDialog').addEventListener('click', () => jobDialog.close());
 document.getElementById('backToJobs').addEventListener('click', () => jobDialog.close());
