@@ -131,7 +131,9 @@ h2 { margin: 12px 0 8px; font-size: clamp(27px, 3.2vw, 37px); letter-spacing: -1
 .job-main h3 { margin: 0 0 4px; font-family: 'Manrope', sans-serif; font-size: 15px; letter-spacing: -.3px; }
 .company { margin: 0; color: #3f4a43; font-size: 12px; }.company span { margin: 0 4px; color: #6b746d; }
 .job-details { display: flex; flex-direction: column; gap: 6px; color: #3f4a43; font-size: 11px; }.job-details strong { color: #1d2b23; font-size: 12px; }
-.apply-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 11px; border: 1px solid #dce4d7; border-radius: 6px; color: #45632e; font-size: 10px; font-weight: 700; white-space: nowrap; transition: .2s; }
+.job-actions { display: flex; flex-direction: column; align-items: stretch; gap: 5px; }
+.job-view-count { color: var(--muted); font-size: 9px; text-align: center; white-space: nowrap; }
+.apply-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 10px 11px; border: 1px solid #dce4d7; border-radius: 6px; color: #45632e; font-size: 10px; font-weight: 700; white-space: nowrap; transition: .2s; }
 .apply-link span { font-size: 13px; }.apply-link:hover { background: var(--green); border-color: var(--green); }
 .empty-state { padding: 42px 20px; text-align: center; background: white; border: 1px solid var(--line); border-radius: 9px; color: #4a554e; font-size: 13px; }
 .jobs-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 20px; color: #4a554e; font-size: 12px; }
@@ -189,7 +191,7 @@ footer { min-height: 75px; padding: 15px 7.1%; display: flex; flex-wrap: wrap; a
   .jobs-section { padding: 55px 5% 45px; }.section-heading { align-items: start; }.section-heading h2 { font-size: 29px; }.section-heading p { max-width: 285px; line-height: 1.6; }.job-count { gap: 4px; font-size: 10px; }.job-count strong { font-size: 19px; }
   .job-list-tools { align-items: flex-start; flex-direction: column; gap: 7px; }
   .search-panel { flex-wrap: wrap; gap: 4px; padding: 11px 13px; }.search-box { flex-basis: 100%; border-bottom: 1px solid var(--line); }.search-box input { padding: 10px 0 13px; }.filter-box { flex: 1; min-width: 0; padding: 9px 7px 4px 2px; border-left: 0; }.filter-box + .filter-box { padding-left: 13px; border-left: 1px solid var(--line); }.filter-box select { font-size: 10px; }.clear-button { margin-left: auto; padding-right: 2px; font-size: 10px; }
-  .job-card { grid-template-columns: 42px 1fr auto; gap: 11px; padding: 14px 12px; }.company-logo { width: 40px; height: 40px; }.job-main h3 { font-size: 13px; }.posted { font-size: 9px; }.job-meta { gap: 7px; }.job-details { grid-column: 2; gap: 4px; }.apply-link { grid-column: 3; grid-row: 1 / span 2; padding: 9px 8px; font-size: 9px; }.role-tag { font-size: 7px; }
+  .job-card { grid-template-columns: 42px 1fr auto; gap: 11px; padding: 14px 12px; }.company-logo { width: 40px; height: 40px; }.job-main h3 { font-size: 13px; }.posted { font-size: 9px; }.job-meta { gap: 7px; }.job-details { grid-column: 2; gap: 4px; }.job-actions { grid-column: 3; grid-row: 1 / span 2; }.apply-link { padding: 9px 8px; font-size: 9px; }.role-tag { font-size: 7px; }
   .community { padding: 25px 6%; gap: 12px; }.community-mark { width: 38px; height: 38px; flex-basis: 38px; font-size: 20px; }.community h2 { font-size: 15px; }.community .eyebrow { font-size: 7px; letter-spacing: 1px; }.community > a { padding: 10px; font-size: 9px; }
   footer { padding: 18px 5%; flex-wrap: wrap; gap: 12px; }.footer-brand { flex-basis: 100%; }
 }

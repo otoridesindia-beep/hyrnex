@@ -83,9 +83,24 @@ create table if not exists public.jobs (
   logo_mark text not null default '',
   logo_accent text not null default '',
   logo_class text not null default '',
+  view_count integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.jobs add column if not exists view_count integer not null default 0;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'jobs_view_count_nonnegative'
+      and conrelid = 'public.jobs'::regclass
+  ) then
+    alter table public.jobs
+      add constraint jobs_view_count_nonnegative check (view_count >= 0);
+  end if;
+end;
+$$;
 
 alter table public.jobs enable row level security;
 
@@ -105,6 +120,31 @@ create policy "jobs_update_admin" on public.jobs
 drop policy if exists "jobs_delete_admin" on public.jobs;
 create policy "jobs_delete_admin" on public.jobs
   for delete to authenticated using (public.is_admin());
+
+create or replace function public.record_job_view(target_job_id uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  updated_view_count integer;
+begin
+  update public.jobs as job
+  set view_count = job.view_count + 1
+  where job.id = target_job_id
+  returning job.view_count into updated_view_count;
+
+  if updated_view_count is null then
+    raise exception 'Job listing not found.';
+  end if;
+
+  return updated_view_count;
+end;
+$$;
+
+revoke all on function public.record_job_view(uuid) from public;
+grant execute on function public.record_job_view(uuid) to anon, authenticated;
 
 create or replace function public.touch_updated_at()
 returns trigger

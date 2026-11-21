@@ -371,6 +371,7 @@ function rowToJob(row) {
     salary: row.salary,
     skills: row.skills,
     apply: row.apply,
+    viewCount: Number.isInteger(row.view_count) ? row.view_count : 0,
     posted: relativeTime(row.created_at),
     isNew: Number.isFinite(postedAt) && ageInMilliseconds >= 0 && ageInMilliseconds < 24 * 60 * 60 * 1000,
     logoMark: row.logo_mark,
@@ -424,6 +425,11 @@ function getSearchText(job) {
   return `${job.title} ${job.company} ${job.skills} ${job.location} ${job.role}`.toLowerCase();
 }
 
+function formatJobViewCount(count) {
+  const views = Number.isInteger(count) && count > 0 ? count : 0;
+  return `${views} ${views === 1 ? 'view' : 'views'}`;
+}
+
 function renderJobs() {
   savedJobCount.textContent = savedJobIds.size;
   savedJobsToggle.setAttribute('aria-pressed', String(savedJobsOnly));
@@ -438,7 +444,10 @@ function renderJobs() {
         <div class="company-logo ${escapeHTML(logoClass)}">${escapeHTML(logoMark)}${job.logoAccent ? `<span>${escapeHTML(job.logoAccent)}</span>` : ''}</div>
         <div class="job-main"><div class="job-meta"><span class="role-tag ${roleClass}">${escapeHTML(roleLabels[job.role] || job.role)}</span>${job.listingType !== 'Posting' ? `<span class="type-tag">${escapeHTML(job.listingType)}</span>` : ''}<span class="posted">${escapeHTML(job.posted || 'Just now')}</span>${job.isNew ? '<span class="new-job-tag">NEW</span>' : ''}<button class="save-job-button${isSaved ? ' is-saved' : ''}" type="button" data-action="toggle-save" data-job-id="${escapeHTML(job.id)}" aria-label="${isSaved ? 'Remove' : 'Save'} ${escapeHTML(job.title)}" aria-pressed="${isSaved}"${savedJobsStorageAvailable ? '' : ' disabled'}><span aria-hidden="true">${isSaved ? '★' : '☆'}</span>${isSaved ? 'Saved' : 'Save'}</button><button class="share-job-button" type="button" data-job-id="${escapeHTML(job.id)}" aria-label="Share ${escapeHTML(job.title)} at ${escapeHTML(job.company)}" title="Share job"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="M8.2 10.8l7.6-4.6M8.2 13.2l7.6 4.6"></path></svg></button></div><h3>${escapeHTML(job.title)}</h3><p class="company">${escapeHTML(job.company)} <span>·</span> ${escapeHTML([job.place, job.state].filter(Boolean).join(', ') || job.location)}</p></div>
         <div class="job-details"><span>${escapeHTML(job.arrangement)}</span><strong>${escapeHTML(job.salary)}</strong></div>
-        <a class="apply-link" href="${escapeHTML(job.apply)}">View role <span aria-hidden="true">↗</span></a>
+        <div class="job-actions">
+          <a class="apply-link" href="${escapeHTML(job.apply)}">View role <span aria-hidden="true">↗</span></a>
+          <span class="job-view-count" aria-live="polite">${formatJobViewCount(job.viewCount)}</span>
+        </div>
         <div class="job-share-feedback job-card-share-feedback" hidden>
           <p role="status" aria-live="polite"></p>
         </div>
@@ -614,7 +623,26 @@ jobsList.addEventListener('click', (event) => {
   if (!job) return;
 
   openJobDialog(job);
+  recordJobView(job, card);
 });
+
+async function recordJobView(job, card) {
+  if (!db || !jobsAreLive) {
+    jobsNotice.textContent = 'Could not record this role view because live listings are unavailable.';
+    return;
+  }
+  try {
+    const { data, error } = await db.rpc('record_job_view', { target_job_id: job.id });
+    if (error) throw error;
+    if (!Number.isInteger(data) || data < 1) throw new Error('The server returned an invalid view count.');
+    job.viewCount = data;
+    card.querySelector('.job-view-count').textContent = formatJobViewCount(data);
+    renderAdminList();
+  } catch (error) {
+    console.error('Could not record role view:', error);
+    jobsNotice.textContent = 'Could not update this role’s view count. Please refresh and try again.';
+  }
+}
 
 function openJobDialog(job) {
   jobDialogTitle.textContent = job.title;
@@ -710,7 +738,7 @@ function renderAdminList() {
   adminJobCount.textContent = `(${jobs.length})`;
   adminJobList.innerHTML = jobs.map((job) => `
     <div class="admin-list-item">
-      <div><strong>${escapeHTML(job.title)}</strong><span>${escapeHTML(job.company)} · ${escapeHTML(job.listingType)} · ${escapeHTML(job.role)} · ${escapeHTML(job.location)}</span></div>
+      <div><strong>${escapeHTML(job.title)}</strong><span>${escapeHTML(job.company)} · ${escapeHTML(job.listingType)} · ${escapeHTML(job.role)} · ${escapeHTML(job.location)} · ${formatJobViewCount(job.viewCount)}</span></div>
       <div class="admin-actions">
         <button class="admin-action" type="button" data-action="edit" data-id="${escapeHTML(job.id)}">Edit</button>
         <button class="admin-action delete" type="button" data-action="delete" data-id="${escapeHTML(job.id)}">Delete</button>
