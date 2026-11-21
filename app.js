@@ -8,6 +8,11 @@ const locationFilter = document.getElementById('locationFilter');
 const typeFilter = document.getElementById('typeFilter');
 const stateFilter = document.getElementById('stateFilter');
 const jobStateSelect = document.getElementById('jobState');
+const signupInterestedRole = document.getElementById('signupInterestedRole');
+const jobRoleSelect = document.getElementById('jobRole');
+jobRoleSelect.querySelectorAll('optgroup').forEach((group) => {
+  signupInterestedRole.append(group.cloneNode(true));
+});
 const INDIAN_STATES = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'];
 INDIAN_STATES.forEach((name) => {
   stateFilter.add(new Option(name, name));
@@ -881,7 +886,7 @@ function renderUsers() {
       <div class="admin-list-item">
         <div>
           <strong>${escapeHTML(user.name)}</strong>
-          <span class="contact-meta">${escapeHTML(user.email)} · ${escapeHTML(user.mobile)}<br>Joined ${escapeHTML(joined)}${adminLabel}</span>
+          <span class="contact-meta">${escapeHTML(user.email)} · ${escapeHTML(user.mobile)}${user.interested_role ? ` · Interested in ${escapeHTML(user.interested_role)}` : ''}<br>Joined ${escapeHTML(joined)}${adminLabel}</span>
         </div>
       </div>`;
   }).join('') || '<p class="admin-note">No registered users yet.</p>';
@@ -891,7 +896,7 @@ async function loadUsers() {
   if (!db || !currentProfile?.is_admin) return setStatus(usersStatus, 'Admin sign-in and a database connection are required.', true);
   setStatus(usersStatus, 'Loading users...');
   const { data, error } = await db.from('profiles')
-    .select('name, email, mobile, is_admin, created_at')
+    .select('name, email, mobile, interested_role, is_admin, created_at')
     .order('created_at', { ascending: false });
   if (error) return setStatus(usersStatus, `Could not load users: ${error.message}`, true);
   registeredUsers = data;
@@ -1043,7 +1048,7 @@ function renderAccount() {
     accountEyebrow.textContent = 'YOUR ACCOUNT';
     accountTitle.textContent = `Hi, ${user.name.split(' ')[0]}`;
     accountSubtitle.textContent = 'You are signed in.';
-    memberDetails.innerHTML = [['Name', user.name], ['Email', user.email], ['Mobile', user.mobile]]
+    memberDetails.innerHTML = [['Name', user.name], ['Email', user.email], ['Mobile', user.mobile], ...(user.interested_role ? [['Interested role', user.interested_role]] : [])]
       .map(([label, value]) => `<tr><th scope="row">${escapeHTML(label)}</th><td>${escapeHTML(value)}</td></tr>`)
       .join('');
   } else if (showingAdminLogin) {
@@ -1071,12 +1076,14 @@ signupForm.addEventListener('submit', async (event) => {
   const name = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim().toLowerCase();
   const mobile = normalizeMobile(document.getElementById('signupMobile').value);
+  const interestedRole = signupInterestedRole.value;
   const mpin = document.getElementById('signupMpin').value;
   const confirmMpin = document.getElementById('signupMpinConfirm').value;
 
   if (name.length < 2) return setStatus(signupStatus, 'Enter your full name.', true);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setStatus(signupStatus, 'Enter a valid email address.', true);
   if (mobile.length !== 10) return setStatus(signupStatus, 'Enter a valid 10-digit mobile number.', true);
+  if (!interestedRole) return setStatus(signupStatus, 'Select the job role you are interested in.', true);
   if (!/^\d{4}$/.test(mpin)) return setStatus(signupStatus, 'MPIN must be exactly 4 digits.', true);
   if (isWeakMpin(mpin)) return setStatus(signupStatus, 'Choose a less predictable MPIN (not 1234, 0000, etc.).', true);
   if (mpin !== confirmMpin) return setStatus(signupStatus, 'MPINs do not match.', true);
@@ -1087,7 +1094,7 @@ signupForm.addEventListener('submit', async (event) => {
   const { data, error } = await db.auth.signUp({
     email: mobileToEmail(mobile),
     password: mpinToPassword(mpin),
-    options: { data: { name, email, mobile } }
+    options: { data: { name, email, mobile, interested_role: interestedRole } }
   });
   submitButton.disabled = false;
 
