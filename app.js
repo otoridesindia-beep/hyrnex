@@ -24,6 +24,9 @@ const jobsNotice = document.querySelector('.disclaimer');
 const savedJobsToggle = document.getElementById('savedJobsToggle');
 const savedJobCount = document.getElementById('savedJobCount');
 const savedJobsStatus = document.getElementById('savedJobsStatus');
+const whatsappInvite = document.getElementById('whatsappInvite');
+const closeWhatsAppInvite = document.getElementById('closeWhatsAppInvite');
+const confirmWhatsAppJoined = document.getElementById('confirmWhatsAppJoined');
 const jobShareStatus = document.getElementById('jobShareStatus');
 const shareDialog = document.getElementById('shareDialog');
 const shareDialogMessage = document.getElementById('shareDialogMessage');
@@ -68,9 +71,11 @@ const openAdminButton = document.getElementById('openAdminButton');
 const roleLabels = {};
 const roleClasses = {};
 const SAVED_JOBS_KEY = 'hyrnex-saved-jobs';
+const WHATSAPP_JOINED_KEY = 'hyrnex-whatsapp-group-joined';
 let savedJobIds = new Set();
 let savedJobsStorageAvailable = true;
 let savedJobsOnly = false;
+let hasJoinedWhatsAppGroup = false;
 let activeCategory = 'all';
 const NON_IT_ROLES = new Set(['HR Executive', 'Sales Executive', 'Marketing Executive', 'Accountant', 'Customer Support', 'Operations Executive', 'Business Development', 'Admin / Back Office', 'Other Non-IT']);
 const categoryOf = (role) => (NON_IT_ROLES.has(role) ? 'Non-IT' : 'IT');
@@ -85,6 +90,12 @@ try {
 } catch (error) {
   savedJobsStorageAvailable = false;
   savedJobsLoadError = `Could not load saved jobs: ${error instanceof Error ? error.message : String(error)}`;
+}
+
+try {
+  hasJoinedWhatsAppGroup = localStorage.getItem(WHATSAPP_JOINED_KEY) === 'true';
+} catch (error) {
+  console.error(`Could not check WhatsApp group preference: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 // Remove data left behind by the earlier browser-only version of the app.
@@ -339,6 +350,8 @@ function getInitialJobs() {
 }
 
 function rowToJob(row) {
+  const postedAt = new Date(row.created_at).getTime();
+  const ageInMilliseconds = Date.now() - postedAt;
   return {
     id: row.id,
     title: row.title,
@@ -354,6 +367,7 @@ function rowToJob(row) {
     skills: row.skills,
     apply: row.apply,
     posted: relativeTime(row.created_at),
+    isNew: Number.isFinite(postedAt) && ageInMilliseconds >= 0 && ageInMilliseconds < 24 * 60 * 60 * 1000,
     logoMark: row.logo_mark,
     logoAccent: row.logo_accent,
     logoClass: row.logo_class
@@ -417,7 +431,7 @@ function renderJobs() {
     return `
       <article class="job-card" data-job-id="${escapeHTML(job.id)}" data-role="${escapeHTML(job.role)}" data-type="${escapeHTML(job.listingType)}" data-location="${escapeHTML(job.location)}" data-state="${escapeHTML(job.state)}" data-search="${escapeHTML(getSearchText(job))}">
         <div class="company-logo ${escapeHTML(logoClass)}">${escapeHTML(logoMark)}${job.logoAccent ? `<span>${escapeHTML(job.logoAccent)}</span>` : ''}</div>
-        <div class="job-main"><div class="job-meta"><span class="role-tag ${roleClass}">${escapeHTML(roleLabels[job.role] || job.role)}</span>${job.listingType !== 'Posting' ? `<span class="type-tag">${escapeHTML(job.listingType)}</span>` : ''}<span class="posted">${escapeHTML(job.posted || 'Just now')}</span><button class="save-job-button${isSaved ? ' is-saved' : ''}" type="button" data-action="toggle-save" data-job-id="${escapeHTML(job.id)}" aria-label="${isSaved ? 'Remove' : 'Save'} ${escapeHTML(job.title)}" aria-pressed="${isSaved}"${savedJobsStorageAvailable ? '' : ' disabled'}><span aria-hidden="true">${isSaved ? '★' : '☆'}</span>${isSaved ? 'Saved' : 'Save'}</button><button class="share-job-button" type="button" data-job-id="${escapeHTML(job.id)}" aria-label="Share ${escapeHTML(job.title)} at ${escapeHTML(job.company)}" title="Share job"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="M8.2 10.8l7.6-4.6M8.2 13.2l7.6 4.6"></path></svg></button></div><h3>${escapeHTML(job.title)}</h3><p class="company">${escapeHTML(job.company)} <span>·</span> ${escapeHTML([job.place, job.state].filter(Boolean).join(', ') || job.location)}</p></div>
+        <div class="job-main"><div class="job-meta"><span class="role-tag ${roleClass}">${escapeHTML(roleLabels[job.role] || job.role)}</span>${job.listingType !== 'Posting' ? `<span class="type-tag">${escapeHTML(job.listingType)}</span>` : ''}<span class="posted">${escapeHTML(job.posted || 'Just now')}</span>${job.isNew ? '<span class="new-job-tag">NEW</span>' : ''}<button class="save-job-button${isSaved ? ' is-saved' : ''}" type="button" data-action="toggle-save" data-job-id="${escapeHTML(job.id)}" aria-label="${isSaved ? 'Remove' : 'Save'} ${escapeHTML(job.title)}" aria-pressed="${isSaved}"${savedJobsStorageAvailable ? '' : ' disabled'}><span aria-hidden="true">${isSaved ? '★' : '☆'}</span>${isSaved ? 'Saved' : 'Save'}</button><button class="share-job-button" type="button" data-job-id="${escapeHTML(job.id)}" aria-label="Share ${escapeHTML(job.title)} at ${escapeHTML(job.company)}" title="Share job"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="M8.2 10.8l7.6-4.6M8.2 13.2l7.6 4.6"></path></svg></button></div><h3>${escapeHTML(job.title)}</h3><p class="company">${escapeHTML(job.company)} <span>·</span> ${escapeHTML([job.place, job.state].filter(Boolean).join(', ') || job.location)}</p></div>
         <div class="job-details"><span>${escapeHTML(job.arrangement)}</span><strong>${escapeHTML(job.salary)}</strong></div>
         <a class="apply-link" href="${escapeHTML(job.apply)}">View role <span aria-hidden="true">↗</span></a>
         <div class="job-share-feedback job-card-share-feedback" hidden>
@@ -1192,6 +1206,34 @@ openAdminButton.addEventListener('click', () => {
   accountDialog.close();
   if (isOpening) adminSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+
+let whatsappInviteTimer;
+function scheduleWhatsAppInvite() {
+  if (hasJoinedWhatsAppGroup) return;
+  whatsappInviteTimer = window.setTimeout(() => {
+    if (!hasJoinedWhatsAppGroup) whatsappInvite.hidden = false;
+  }, 60000);
+}
+
+closeWhatsAppInvite.addEventListener('click', () => {
+  whatsappInvite.hidden = true;
+  window.clearTimeout(whatsappInviteTimer);
+  scheduleWhatsAppInvite();
+});
+
+confirmWhatsAppJoined.addEventListener('click', () => {
+  hasJoinedWhatsAppGroup = true;
+  try {
+    localStorage.setItem(WHATSAPP_JOINED_KEY, 'true');
+  } catch (error) {
+    console.error(`Could not save WhatsApp group preference: ${error instanceof Error ? error.message : String(error)}`);
+    window.alert('We could not save your preference. The invite may appear again on your next visit.');
+  }
+  whatsappInvite.hidden = true;
+  window.clearTimeout(whatsappInviteTimer);
+});
+
+scheduleWhatsAppInvite();
 
 if (db) {
   // Defer the callback body: calling Supabase inside it can deadlock the auth client.
