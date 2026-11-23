@@ -67,6 +67,29 @@ h1 span { color: var(--green); }
 .label-top { top: 53px; right: 56px; }.label-bottom { bottom: 57px; left: 24px; color: var(--green); }
 .spark { position: absolute; color: var(--green); font-size: 21px; }.spark-one { top: 82px; left: 53px; }.spark-two { bottom: 68px; right: 42px; color: #e7f5dd; }
 .jobs-section { padding: 77px 11.4% 68px; }
+.candidates-section { padding: 68px 11.4%; background: #edf2e8; border-top: 1px solid var(--line); }
+.candidate-search-panel { display: flex; gap: 12px; margin-bottom: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.candidate-search-box { display: flex; flex: 1; flex-direction: column; gap: 7px; min-width: 0; }
+.candidate-role-filter { flex: 0 1 270px; }
+.candidate-search-box input, .candidate-search-box select { width: 100%; min-height: 40px; padding: 9px 10px; border: 1px solid #dfe5dc; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 12px; }
+.candidate-search-box input:focus, .candidate-search-box select:focus { outline: 2px solid #c6f36a; border-color: #91b94b; }
+.candidate-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.candidate-card { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 1px solid #dfe5dc; border-radius: 9px; background: #fff; }
+.candidate-card h3 { margin: 0; font-family: 'Manrope', sans-serif; font-size: 16px; }
+.candidate-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.candidate-card .candidate-headline { color: var(--ink); font-weight: 700; }
+.candidate-card .candidate-role-tag { align-self: flex-start; padding: 5px 8px; border-radius: 4px; background: #edf4e3; color: #44651f; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.candidate-card .candidate-skills { color: #44651f; }
+.candidate-card a:not(.candidate-contact) { color: #45632e; font-weight: 700; }
+.candidate-contact { align-self: flex-start; margin-top: auto; padding: 10px 13px; border-radius: 6px; background: var(--deep-green); color: #fff; font-size: 11px; font-weight: 700; }
+.candidate-contact:hover { background: #345943; }
+.candidate-directory-status { margin: 14px 0 0; color: var(--muted); font-size: 11px; }
+.candidate-directory-status.is-error { color: #a34a42; }
+.candidate-profile-form { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.candidate-profile-form h3 { margin: 0 0 7px; font-family: 'Manrope', sans-serif; font-size: 15px; }
+.candidate-profile-note { margin: 0 0 13px; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.candidate-publish-toggle { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; color: var(--ink); font-size: 11px; font-weight: 700; line-height: 1.5; }
+.candidate-publish-toggle input { margin-top: 2px; accent-color: #45632e; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 30px; }
 .section-eyebrow { color: #4f6d27; }
 h2 { margin: 12px 0 8px; font-size: clamp(27px, 3.2vw, 37px); letter-spacing: -1.8px; line-height: 1.2; }
@@ -181,7 +204,7 @@ footer { min-height: 75px; padding: 15px 7.1%; display: flex; flex-wrap: wrap; a
 .footer-brand { color: var(--ink); font-size: 13px; }.footer-brand .brand-mark { width: 25px; height: 25px; font-size: 15px; border-radius: 7px; }
 @media (max-width: 900px) {
   .site-header { padding: 0 5%; gap: 10px; }.main-nav { gap: 14px; margin-left: 6px; font-size: 11px; }.header-cta { padding: 9px 12px; font-size: 11px; }.header-cta span { padding-left: 6px; }.hero { padding-left: 8%; padding-right: 8%; }.hero-art { right: 3%; opacity: .55; transform: scale(.85); }
-  .jobs-section { padding: 65px 7%; }.job-card { grid-template-columns: 44px minmax(160px, 1fr) minmax(115px, 150px) 90px; gap: 12px; padding: 16px 13px; }
+  .jobs-section { padding: 65px 7%; }.candidates-section { padding: 60px 7%; }.job-card { grid-template-columns: 44px minmax(160px, 1fr) minmax(115px, 150px) 90px; gap: 12px; padding: 16px 13px; }
   .community { padding: 30px 7%; }
 }
 @media (max-width: 640px) {
@@ -189,6 +212,7 @@ footer { min-height: 75px; padding: 15px 7.1%; display: flex; flex-wrap: wrap; a
   .hero { min-height: 435px; padding: 70px 7% 24px; }.hero-art { top: 76px; right: -130px; opacity: .28; transform: scale(.78); }.hero-content { max-width: 100%; }.hero-copy { max-width: 345px; }
   .hero-foot { left: 7%; right: 7%; font-size: 7px; letter-spacing: 1px; }
   .jobs-section { padding: 55px 5% 45px; }.section-heading { align-items: start; }.section-heading h2 { font-size: 29px; }.section-heading p { max-width: 285px; line-height: 1.6; }.job-count { gap: 4px; font-size: 10px; }.job-count strong { font-size: 19px; }
+  .candidates-section { padding: 48px 5%; }.candidate-search-panel { flex-direction: column; }.candidate-role-filter { flex-basis: auto; }.candidate-list { grid-template-columns: 1fr; }
   .job-list-tools { align-items: flex-start; flex-direction: column; gap: 7px; }
   .search-panel { flex-wrap: wrap; gap: 4px; padding: 11px 13px; }.search-box { flex-basis: 100%; border-bottom: 1px solid var(--line); }.search-box input { padding: 10px 0 13px; }.filter-box { flex: 1; min-width: 0; padding: 9px 7px 4px 2px; border-left: 0; }.filter-box + .filter-box { padding-left: 13px; border-left: 1px solid var(--line); }.filter-box select { font-size: 10px; }.clear-button { margin-left: auto; padding-right: 2px; font-size: 10px; }
   .job-card { grid-template-columns: 42px 1fr auto; gap: 11px; padding: 14px 12px; }.company-logo { width: 40px; height: 40px; }.job-main h3 { font-size: 13px; }.posted { font-size: 9px; }.job-meta { gap: 7px; }.job-details { grid-column: 2; gap: 4px; }.job-actions { grid-column: 3; grid-row: 1 / span 2; }.apply-link { padding: 9px 8px; font-size: 9px; }.role-tag { font-size: 7px; }
@@ -205,7 +229,7 @@ footer { min-height: 75px; padding: 15px 7.1%; display: flex; flex-wrap: wrap; a
 .admin-heading h2 span { color: #5f8a24; }
 .admin-heading p { margin: 0; color: var(--muted); font-size: 13px; }
 .admin-badge { padding: 7px 10px; border: 1px solid #dce4d7; border-radius: 20px; color: #44651f; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
-.admin-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; max-width: 720px; padding: 4px; margin-bottom: 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; }
+.admin-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; max-width: 720px; padding: 4px; margin-bottom: 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; }
 .admin-tab { padding: 11px 8px; border: 0; border-radius: 6px; background: transparent; color: #2f3a33; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: .2s; }
 .admin-tab:hover { color: var(--ink); }
 .admin-tab.is-active { background: var(--deep-green); color: #fff; }
@@ -320,6 +344,7 @@ footer { min-height: 75px; padding: 15px 7.1%; display: flex; flex-wrap: wrap; a
 }
 @media (max-width: 640px) {
   .admin-nav-toggle { padding: 8px 10px; font-size: 10px; }
+  .admin-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
   .admin-section { padding: 48px 5%; }
   .admin-heading { align-items: start; gap: 12px; }
   .admin-badge { font-size: 8px; white-space: nowrap; }
@@ -335,6 +360,7 @@ footer { min-height: 75px; padding: 15px 7.1%; display: flex; flex-wrap: wrap; a
   .job-dialog-actions { padding: 16px 20px 21px; }
   .similar-jobs { padding: 0 20px 22px; }
   .account-body { padding: 18px 20px 22px; }
+  .candidate-profile-form .account-fields { grid-template-columns: 1fr; }.candidate-profile-form .account-fields .admin-wide { grid-column: 1; }
   .account-actions { padding: 16px 0 0; }
 }
 

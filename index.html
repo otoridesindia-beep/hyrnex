@@ -25,6 +25,7 @@
       </a>
       <nav class="main-nav" aria-label="Main navigation">
         <a href="#jobs">Browse jobs</a>
+        <a href="#candidates">Browse candidates</a>
         <a href="#tips">Interview tips</a>
         <a href="pricing.html">Pricing</a>
         <a href="contact.html">Contact us</a>
@@ -173,6 +174,30 @@
         <p class="disclaimer" role="status" aria-live="polite">Loading current opportunities…</p>
       </section>
 
+      <section class="candidates-section" id="candidates" aria-labelledby="candidatesHeading">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow section-eyebrow">HYRNEX TALENT DIRECTORY</div>
+            <h2 id="candidatesHeading">Meet people ready <span>for their next role.</span></h2>
+            <p>Explore candidate profiles shared with hiring teams.</p>
+          </div>
+          <div class="job-count"><strong id="candidateCount">0</strong><span>candidates</span></div>
+        </div>
+        <div class="candidate-search-panel">
+          <label class="candidate-search-box">
+            <span class="filter-label">SEARCH CANDIDATES</span>
+            <input id="candidateSearch" type="search" placeholder="Search name, role, skills, or location..." aria-label="Search candidates" />
+          </label>
+          <label class="candidate-search-box candidate-role-filter">
+            <span class="filter-label">ROLE</span>
+            <select id="candidateRoleFilter" aria-label="Filter candidates by role"><option value="all">All roles</option></select>
+          </label>
+        </div>
+        <div class="candidate-list" id="candidateList" aria-live="polite"></div>
+        <div class="empty-state" id="candidateEmptyState" hidden>No public candidate profiles match this search.</div>
+        <p class="candidate-directory-status" id="candidateDirectoryStatus" role="status" aria-live="polite">Loading candidate profiles…</p>
+      </section>
+
       <dialog class="job-dialog share-dialog" id="shareDialog" aria-labelledby="shareDialogTitle">
         <div class="job-dialog-header">
           <div>
@@ -267,6 +292,27 @@
           <table class="job-info-table">
             <tbody id="memberDetails"></tbody>
           </table>
+          <form class="account-form candidate-profile-form" id="candidateProfileForm" novalidate>
+            <h3>Your candidate profile</h3>
+            <p class="candidate-profile-note">Build a profile for hiring teams. It stays private until you choose to publish it. Your account mobile number and email stay private; only the separate public contact details you enter here can be displayed.</p>
+            <div class="admin-fields account-fields">
+              <label class="admin-wide">Public display name<input id="candidateDisplayName" type="text" maxlength="100" required /></label>
+              <label class="admin-wide">Interested role<select id="candidateRole" required></select></label>
+              <label class="admin-wide">Professional headline<input id="candidateHeadline" type="text" maxlength="120" placeholder="e.g. Data analyst with 3 years of experience" required /></label>
+              <label class="admin-wide">Location<input id="candidateLocation" type="text" maxlength="100" placeholder="City, state, or remote" /></label>
+              <label class="admin-wide">Experience<input id="candidateExperience" type="text" maxlength="80" placeholder="e.g. 3 years" /></label>
+              <label class="admin-wide">Skills<input id="candidateSkills" type="text" maxlength="300" placeholder="SQL, Power BI, Python" /></label>
+              <label class="admin-wide">About you<textarea id="candidateSummary" rows="4" maxlength="1000" placeholder="Share a short introduction and the work you are looking for."></textarea></label>
+              <label class="admin-wide">Public contact email<input id="candidateContactEmail" type="email" maxlength="254" autocomplete="email" placeholder="Email hiring teams can use to contact you" /></label>
+              <label class="admin-wide">Public contact phone (optional)<input id="candidateContactMobile" type="tel" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="10-digit number hiring teams can use" /></label>
+            </div>
+            <label class="candidate-publish-toggle"><input id="candidateIsPublic" type="checkbox" /> Publish my profile in the candidate directory</label>
+            <p class="candidate-profile-note">When published, your display name, role, career details, public contact email, and any phone number you enter are visible to anyone visiting the directory. Do not enter sensitive information.</p>
+            <div class="admin-form-actions">
+              <button class="admin-submit" type="submit">Save candidate profile</button>
+              <span class="admin-status account-status" id="candidateProfileStatus" role="status" aria-live="polite"></span>
+            </div>
+          </form>
           <div class="job-dialog-actions account-actions">
             <button class="admin-cancel" id="signOutButton" type="button">Sign out</button>
           </div>
@@ -309,6 +355,7 @@
         <div class="admin-tabs" role="tablist" aria-label="Admin sections">
           <button class="admin-tab is-active" id="tabPost" type="button" role="tab" aria-selected="true" aria-controls="panelPost" data-panel="panelPost">Post a job</button>
           <button class="admin-tab" id="tabManage" type="button" role="tab" aria-selected="false" aria-controls="panelManage" data-panel="panelManage" tabindex="-1">Manage listings</button>
+          <button class="admin-tab" id="tabCandidates" type="button" role="tab" aria-selected="false" aria-controls="panelCandidates" data-panel="panelCandidates" tabindex="-1">Candidates</button>
           <button class="admin-tab" id="tabQuestions" type="button" role="tab" aria-selected="false" aria-controls="panelQuestions" data-panel="panelQuestions" tabindex="-1">Daily questions</button>
           <button class="admin-tab" id="tabUsers" type="button" role="tab" aria-selected="false" aria-controls="panelUsers" data-panel="panelUsers" tabindex="-1">Users</button>
           <button class="admin-tab" id="tabContacts" type="button" role="tab" aria-selected="false" aria-controls="panelContacts" data-panel="panelContacts" tabindex="-1">Contact requests</button>
@@ -391,6 +438,21 @@
         <p class="admin-note">Changes are saved to the shared database and are visible to everyone.</p>
         </div>
 
+        <div class="admin-panel" id="panelCandidates" role="tabpanel" aria-labelledby="tabCandidates" hidden>
+          <div class="admin-list-wrap">
+            <div class="contact-admin-head">
+              <h3>Candidate profiles <span id="adminCandidateCount"></span></h3>
+              <div class="admin-actions">
+                <button class="admin-submit" id="newCandidateProfile" type="button">New profile</button>
+                <button class="csv-button" id="refreshCandidateProfiles" type="button">Refresh</button>
+              </div>
+            </div>
+            <p class="admin-status" id="adminCandidateListStatus" role="status" aria-live="polite"></p>
+            <div class="admin-list" id="adminCandidateList"></div>
+          </div>
+          <p class="admin-note">Profiles created here are not linked to a candidate login. Use this panel to unpublish or remove them if requested.</p>
+        </div>
+
         <div class="admin-panel" id="panelQuestions" role="tabpanel" aria-labelledby="tabQuestions" hidden>
           <form class="admin-form" id="dailyQuestionForm">
             <input id="dailyQuestionId" type="hidden" />
@@ -439,6 +501,37 @@
           <div class="admin-list" id="contactList"></div>
         </div>
         </div>
+      </section>
+
+      <section class="admin-section admin-candidate-page" id="adminCandidatePage" hidden>
+        <div class="admin-heading">
+          <div>
+            <div class="eyebrow section-eyebrow">HYRNEX TALENT DIRECTORY</div>
+            <h2>Create a candidate <span>profile.</span></h2>
+            <p>This profile will be managed by the admin and published in the public directory.</p>
+          </div>
+          <button class="admin-cancel" id="backToCandidates" type="button">← Back to candidates</button>
+        </div>
+        <form class="admin-form" id="adminCandidateForm" novalidate>
+          <h3>Candidate details</h3>
+          <div class="admin-fields">
+            <label>Candidate name<input id="adminCandidateName" type="text" maxlength="100" required /></label>
+            <label>Interested role<select id="adminCandidateRole" required></select></label>
+            <label>Location<input id="adminCandidateLocation" type="text" maxlength="100" placeholder="City, state, or remote" /></label>
+            <label class="admin-wide">Professional headline<input id="adminCandidateHeadline" type="text" maxlength="120" placeholder="e.g. Data analyst with 3 years of experience" required /></label>
+            <label>Experience<input id="adminCandidateExperience" type="text" maxlength="80" placeholder="e.g. 3 years" /></label>
+            <label class="admin-wide">Skills<input id="adminCandidateSkills" type="text" maxlength="300" placeholder="SQL, Power BI, Python" /></label>
+            <label class="admin-wide">About candidate<textarea id="adminCandidateSummary" rows="4" maxlength="1000" placeholder="Share a short introduction and the work the candidate is looking for."></textarea></label>
+            <label>Public contact email<input id="adminCandidateEmail" type="email" maxlength="254" required /></label>
+            <label>Public contact phone (optional)<input id="adminCandidateMobile" type="tel" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="10-digit number" /></label>
+          </div>
+          <label class="candidate-publish-toggle"><input id="adminCandidateConsent" type="checkbox" required /> I confirm the candidate agreed to publish this profile and the contact details above.</label>
+          <p class="admin-note">The candidate’s name, career details, email, and any phone number entered will be visible publicly after publishing.</p>
+          <div class="admin-form-actions">
+            <button class="admin-submit" type="submit">Create and publish profile</button>
+            <span class="admin-status" id="adminCandidateStatus" role="status" aria-live="polite"></span>
+          </div>
+        </form>
       </section>
 
       <section class="tips-section" id="tips">

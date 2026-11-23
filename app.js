@@ -13,6 +13,14 @@ const jobRoleSelect = document.getElementById('jobRole');
 jobRoleSelect.querySelectorAll('optgroup').forEach((group) => {
   signupInterestedRole.append(group.cloneNode(true));
 });
+const candidateRoleSelect = document.getElementById('candidateRole');
+candidateRoleSelect.innerHTML = signupInterestedRole.innerHTML;
+const adminCandidateRoleSelect = document.getElementById('adminCandidateRole');
+adminCandidateRoleSelect.innerHTML = signupInterestedRole.innerHTML;
+const candidateRoleFilter = document.getElementById('candidateRoleFilter');
+signupInterestedRole.querySelectorAll('optgroup').forEach((group) => {
+  candidateRoleFilter.append(group.cloneNode(true));
+});
 const INDIAN_STATES = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'];
 INDIAN_STATES.forEach((name) => {
   stateFilter.add(new Option(name, name));
@@ -44,6 +52,12 @@ const jobForm = document.getElementById('jobForm');
 const adminJobList = document.getElementById('adminJobList');
 const adminJobCount = document.getElementById('adminJobCount');
 const adminStatus = document.getElementById('adminStatus');
+const adminCandidateForm = document.getElementById('adminCandidateForm');
+const adminCandidateStatus = document.getElementById('adminCandidateStatus');
+const adminCandidateListStatus = document.getElementById('adminCandidateListStatus');
+const adminCandidateList = document.getElementById('adminCandidateList');
+const adminCandidateCount = document.getElementById('adminCandidateCount');
+const adminCandidatePage = document.getElementById('adminCandidatePage');
 const adminSection = document.getElementById('admin');
 const saveJobButton = document.getElementById('saveJob');
 const jobDialog = document.getElementById('jobDialog');
@@ -61,6 +75,13 @@ const accountSubtitle = document.getElementById('accountSubtitle');
 const guestView = document.getElementById('guestView');
 const memberView = document.getElementById('memberView');
 const memberDetails = document.getElementById('memberDetails');
+const candidateProfileForm = document.getElementById('candidateProfileForm');
+const candidateProfileStatus = document.getElementById('candidateProfileStatus');
+const candidateDirectoryStatus = document.getElementById('candidateDirectoryStatus');
+const candidateList = document.getElementById('candidateList');
+const candidateCount = document.getElementById('candidateCount');
+const candidateEmptyState = document.getElementById('candidateEmptyState');
+const candidateSearch = document.getElementById('candidateSearch');
 const adminLoginView = document.getElementById('adminLoginView');
 const adminSessionView = document.getElementById('adminSessionView');
 const signupForm = document.getElementById('signupForm');
@@ -865,11 +886,13 @@ document.getElementById('cancelEdit').addEventListener('click', () => {
 
 function setAdminVisible(isVisible) {
   adminSection.hidden = !isVisible;
+  if (!isVisible) adminCandidatePage.hidden = true;
   openAdminButton.textContent = isVisible ? 'Close admin console' : 'Open admin console';
   if (isVisible) {
     loadContactRequests();
     loadDailyQuestionAdminList();
     loadUsers();
+    loadAdminCandidateProfiles();
   }
 }
 
@@ -895,6 +918,43 @@ adminTabs.forEach((tab, index) => {
       showAdminTab(adminTabs[(index + step + adminTabs.length) % adminTabs.length], true);
     }
   });
+});
+
+function showAdminCandidateCreatePage(pushHistory = true) {
+  if (!currentProfile?.is_admin) return;
+  adminSection.hidden = true;
+  adminCandidatePage.hidden = false;
+  if (pushHistory) {
+    adminCandidateForm.reset();
+    setStatus(adminCandidateStatus, '');
+    history.pushState({ adminCandidateCreate: true }, '', `${location.pathname}${location.search}#admin-candidates/new`);
+  }
+  adminCandidatePage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function returnToAdminCandidates(updateHistory = true) {
+  adminCandidatePage.hidden = true;
+  if (!currentProfile?.is_admin) return;
+  adminSection.hidden = false;
+  showAdminTab(document.getElementById('tabCandidates'));
+  if (updateHistory) {
+    history.replaceState(null, '', `${location.pathname}${location.search}#admin`);
+  }
+  adminSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('newCandidateProfile').addEventListener('click', () => {
+  showAdminCandidateCreatePage();
+});
+document.getElementById('backToCandidates').addEventListener('click', () => {
+  returnToAdminCandidates();
+});
+window.addEventListener('popstate', () => {
+  if (location.hash === '#admin-candidates/new') {
+    showAdminCandidateCreatePage(false);
+  } else if (!adminCandidatePage.hidden) {
+    returnToAdminCandidates(false);
+  }
 });
 
 /* ---------- Registered users (admin) ---------- */
@@ -933,6 +993,177 @@ async function loadUsers() {
 }
 
 document.getElementById('refreshUsers').addEventListener('click', loadUsers);
+
+/* ---------- Public candidate directory ---------- */
+
+let candidateProfiles = [];
+let currentCandidateProfile = null;
+let candidateProfileLoadError = '';
+
+function renderCandidateProfiles() {
+  const search = candidateSearch.value.trim().toLowerCase();
+  const role = candidateRoleFilter.value;
+  const matches = candidateProfiles.filter((candidate) => {
+    const searchableText = `${candidate.display_name} ${candidate.role} ${candidate.headline} ${candidate.skills} ${candidate.location} ${candidate.summary}`.toLowerCase();
+    return (role === 'all' || candidate.role === role) && (!search || searchableText.includes(search));
+  });
+
+  candidateCount.textContent = String(matches.length);
+  candidateList.innerHTML = matches.map((candidate) => {
+    const contactSubject = encodeURIComponent(`Opportunity for ${candidate.role}`);
+    const details = [candidate.location, candidate.experience].filter(Boolean).map(escapeHTML).join(' · ');
+    return `
+      <article class="candidate-card">
+        <span class="candidate-role-tag">${escapeHTML(candidate.role)}</span>
+        <h3>${escapeHTML(candidate.display_name)}</h3>
+        <p class="candidate-headline">${escapeHTML(candidate.headline)}</p>
+        ${details ? `<p>${details}</p>` : ''}
+        ${candidate.skills ? `<p class="candidate-skills"><strong>Skills:</strong> ${escapeHTML(candidate.skills)}</p>` : ''}
+        ${candidate.summary ? `<p>${escapeHTML(candidate.summary)}</p>` : ''}
+        ${candidate.contact_mobile ? `<p><strong>Phone:</strong> <a href="tel:${escapeHTML(candidate.contact_mobile)}">${escapeHTML(candidate.contact_mobile)}</a></p>` : ''}
+        <a class="candidate-contact" href="mailto:${escapeHTML(candidate.contact_email)}?subject=${contactSubject}">Contact candidate</a>
+      </article>`;
+  }).join('');
+  candidateEmptyState.hidden = matches.length > 0;
+}
+
+async function loadCandidateDirectory() {
+  if (!db) {
+    setStatus(candidateDirectoryStatus, 'The candidate directory is unavailable because the database is not connected.', true);
+    return;
+  }
+  setStatus(candidateDirectoryStatus, 'Loading candidate profiles…');
+  const { data, error } = await db.from('candidate_profiles')
+    .select('display_name, role, headline, summary, skills, location, experience, contact_email, contact_mobile')
+    .eq('is_public', true)
+    .order('updated_at', { ascending: false });
+  if (error) {
+    setStatus(candidateDirectoryStatus, `Could not load candidate profiles: ${error.message}. Run supabase-candidate-profiles.sql in Supabase first.`, true);
+    return;
+  }
+  candidateProfiles = data || [];
+  setStatus(candidateDirectoryStatus, candidateProfiles.length
+    ? 'Contact candidates directly using the email they chose to share.'
+    : 'No candidates have published a profile yet.');
+  renderCandidateProfiles();
+}
+
+candidateSearch.addEventListener('input', renderCandidateProfiles);
+candidateRoleFilter.addEventListener('change', renderCandidateProfiles);
+
+/* ---------- Admin-created candidate profiles ---------- */
+
+let adminCandidateProfiles = [];
+
+function renderAdminCandidateProfiles() {
+  adminCandidateCount.textContent = `(${adminCandidateProfiles.length})`;
+  adminCandidateList.innerHTML = adminCandidateProfiles.map((candidate) => `
+    <div class="admin-list-item">
+      <div>
+        <strong>${escapeHTML(candidate.display_name)} · ${escapeHTML(candidate.role)}</strong>
+        <span class="contact-meta">${escapeHTML(candidate.contact_email)}${candidate.contact_mobile ? ` · ${escapeHTML(candidate.contact_mobile)}` : ''}<br>${candidate.is_public ? 'Published' : 'Private draft'}</span>
+      </div>
+      <div class="admin-actions">
+        <button class="admin-action" type="button" data-action="${candidate.is_public ? 'unpublish' : 'publish'}" data-id="${escapeHTML(candidate.id)}">${candidate.is_public ? 'Unpublish' : 'Publish'}</button>
+        <button class="admin-action delete" type="button" data-action="delete" data-id="${escapeHTML(candidate.id)}">Delete</button>
+      </div>
+    </div>`).join('') || '<p class="admin-note">No candidate profiles yet.</p>';
+}
+
+async function loadAdminCandidateProfiles() {
+  if (!db || !currentProfile?.is_admin) return setStatus(adminCandidateListStatus, 'Admin sign-in and a database connection are required.', true);
+  setStatus(adminCandidateListStatus, 'Loading candidate profiles…');
+  const { data, error } = await db.from('candidate_profiles')
+    .select('id, user_id, created_by, display_name, role, headline, contact_email, contact_mobile, is_public, publication_consent')
+    .order('created_at', { ascending: false });
+  if (error) return setStatus(adminCandidateListStatus, `Could not load candidate profiles: ${error.message}. Run supabase-candidate-profiles.sql in Supabase first.`, true);
+  adminCandidateProfiles = data || [];
+  setStatus(adminCandidateListStatus, '');
+  renderAdminCandidateProfiles();
+}
+
+adminCandidateForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!db || !currentProfile?.is_admin) return setStatus(adminCandidateStatus, 'Admin sign-in and a database connection are required.', true);
+
+  const displayName = document.getElementById('adminCandidateName').value.trim();
+  const role = adminCandidateRoleSelect.value;
+  const headline = document.getElementById('adminCandidateHeadline').value.trim();
+  const contactEmail = document.getElementById('adminCandidateEmail').value.trim().toLowerCase();
+  const contactMobile = document.getElementById('adminCandidateMobile').value.trim();
+  if (displayName.length < 2) return setStatus(adminCandidateStatus, 'Enter the candidate name.', true);
+  if (!role) return setStatus(adminCandidateStatus, 'Select the candidate’s interested role.', true);
+  if (headline.length < 3) return setStatus(adminCandidateStatus, 'Enter a professional headline.', true);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return setStatus(adminCandidateStatus, 'Enter a valid public contact email.', true);
+  if (contactMobile && !/^\d{10}$/.test(contactMobile)) return setStatus(adminCandidateStatus, 'Enter a 10-digit public contact phone number.', true);
+  if (!document.getElementById('adminCandidateConsent').checked) {
+    return setStatus(adminCandidateStatus, 'Confirm the candidate has agreed to publish this profile and its contact details.', true);
+  }
+
+  const saveButton = adminCandidateForm.querySelector('button[type=submit]');
+  saveButton.disabled = true;
+  const { data, error } = await db.from('candidate_profiles').insert({
+    user_id: null,
+    created_by: currentProfile.id,
+    display_name: displayName,
+    role,
+    headline,
+    location: document.getElementById('adminCandidateLocation').value.trim(),
+    experience: document.getElementById('adminCandidateExperience').value.trim(),
+    skills: document.getElementById('adminCandidateSkills').value.trim(),
+    summary: document.getElementById('adminCandidateSummary').value.trim(),
+    contact_email: contactEmail,
+    contact_mobile: contactMobile,
+    is_public: true,
+    publication_consent: true
+  }).select('id, user_id, created_by, display_name, role, headline, contact_email, contact_mobile, is_public, publication_consent').single();
+  saveButton.disabled = false;
+
+  if (error) return setStatus(adminCandidateStatus, `Could not create the candidate profile: ${error.message}`, true);
+  if (!data) return setStatus(adminCandidateStatus, 'The candidate profile was not created. Please try again.', true);
+  adminCandidateForm.reset();
+  adminCandidateProfiles = [data, ...adminCandidateProfiles];
+  renderAdminCandidateProfiles();
+  setStatus(adminCandidateStatus, 'Candidate profile created and published.');
+  await loadCandidateDirectory();
+});
+
+adminCandidateList.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-action]');
+  if (!button || !db || !currentProfile?.is_admin) return;
+  const candidate = adminCandidateProfiles.find((item) => item.id === button.dataset.id);
+  if (!candidate) return;
+
+  if (button.dataset.action === 'delete') {
+    if (!window.confirm(`Delete the candidate profile for ${candidate.display_name}?`)) return;
+    const { data, error } = await db.from('candidate_profiles').delete().eq('id', candidate.id).select('id');
+    if (error || !data || data.length === 0) return setStatus(adminCandidateListStatus, `Could not delete the candidate profile: ${error?.message || 'No profile was changed.'}`, true);
+    adminCandidateProfiles = adminCandidateProfiles.filter((item) => item.id !== candidate.id);
+    renderAdminCandidateProfiles();
+    setStatus(adminCandidateListStatus, 'Candidate profile deleted.');
+    await loadCandidateDirectory();
+    return;
+  }
+
+  const isPublishing = button.dataset.action === 'publish';
+  if (isPublishing && !window.confirm('Confirm the candidate has agreed to publish their profile and contact details.')) return;
+  const { data, error } = await db.from('candidate_profiles')
+    .update({ is_public: isPublishing, publication_consent: isPublishing || candidate.publication_consent })
+    .eq('id', candidate.id)
+    .select('id, user_id, created_by, display_name, role, headline, contact_email, contact_mobile, is_public, publication_consent')
+    .single();
+  if (error || !data) return setStatus(adminCandidateListStatus, `Could not update the candidate profile: ${error?.message || 'No profile was changed.'}`, true);
+  adminCandidateProfiles = adminCandidateProfiles.map((item) => item.id === candidate.id ? data : item);
+  renderAdminCandidateProfiles();
+  setStatus(adminCandidateListStatus, isPublishing ? 'Candidate profile published.' : 'Candidate profile unpublished.');
+  await loadCandidateDirectory();
+});
+
+document.getElementById('refreshCandidateProfiles').addEventListener('click', loadAdminCandidateProfiles);
+
+document.getElementById('adminCandidateMobile').addEventListener('input', (event) => {
+  event.target.value = event.target.value.replace(/\D/g, '').slice(0, 10);
+});
 
 /* ---------- Contact requests (admin) ---------- */
 
@@ -1036,12 +1267,24 @@ function isWeakMpin(mpin) {
 
 async function loadProfile() {
   currentProfile = null;
+  currentCandidateProfile = null;
+  candidateProfileLoadError = '';
   if (!db) return;
   const { data: sessionData } = await db.auth.getSession();
   const user = sessionData.session?.user;
   if (!user) return;
   const { data } = await db.from('profiles').select('*').eq('id', user.id).maybeSingle();
   currentProfile = data || null;
+  if (!currentProfile || currentProfile.is_admin) return;
+  const { data: candidateData, error } = await db.from('candidate_profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (error) {
+    candidateProfileLoadError = error.message;
+    return;
+  }
+  currentCandidateProfile = candidateData;
 }
 
 function showAccountTab(tab) {
@@ -1079,6 +1322,19 @@ function renderAccount() {
     memberDetails.innerHTML = [['Name', user.name], ['Email', user.email], ['Mobile', user.mobile], ...(user.interested_role ? [['Interested role', user.interested_role]] : [])]
       .map(([label, value]) => `<tr><th scope="row">${escapeHTML(label)}</th><td>${escapeHTML(value)}</td></tr>`)
       .join('');
+    document.getElementById('candidateDisplayName').value = currentCandidateProfile?.display_name || user.name;
+    candidateRoleSelect.value = currentCandidateProfile?.role || user.interested_role || '';
+    document.getElementById('candidateHeadline').value = currentCandidateProfile?.headline || '';
+    document.getElementById('candidateLocation').value = currentCandidateProfile?.location || '';
+    document.getElementById('candidateExperience').value = currentCandidateProfile?.experience || '';
+    document.getElementById('candidateSkills').value = currentCandidateProfile?.skills || '';
+    document.getElementById('candidateSummary').value = currentCandidateProfile?.summary || '';
+    document.getElementById('candidateContactEmail').value = currentCandidateProfile?.contact_email || '';
+    document.getElementById('candidateContactMobile').value = currentCandidateProfile?.contact_mobile || '';
+    document.getElementById('candidateIsPublic').checked = Boolean(currentCandidateProfile?.is_public);
+    setStatus(candidateProfileStatus, candidateProfileLoadError
+      ? `Candidate profiles are not ready: ${candidateProfileLoadError}. Run supabase-candidate-profiles.sql in Supabase first.`
+      : '');
   } else if (showingAdminLogin) {
     accountEyebrow.textContent = 'ADMINISTRATOR';
     accountTitle.textContent = 'Admin login';
@@ -1098,6 +1354,57 @@ function describeAuthError(error, fallback) {
   if (error?.code === 'email_provider_disabled') return 'Sign-in is not available: the Email provider is turned off in Supabase Auth settings.';
   return fallback;
 }
+
+candidateProfileForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!currentProfile || currentProfile.is_admin) {
+    return setStatus(candidateProfileStatus, 'Sign in with a candidate account to manage your profile.', true);
+  }
+  if (!db) return setStatus(candidateProfileStatus, 'Could not reach the database. Check your connection.', true);
+
+  const displayName = document.getElementById('candidateDisplayName').value.trim();
+  const role = candidateRoleSelect.value;
+  const headline = document.getElementById('candidateHeadline').value.trim();
+  const contactEmail = document.getElementById('candidateContactEmail').value.trim().toLowerCase();
+  const contactMobile = document.getElementById('candidateContactMobile').value.trim();
+  const isPublic = document.getElementById('candidateIsPublic').checked;
+  if (displayName.length < 2) return setStatus(candidateProfileStatus, 'Enter a public display name.', true);
+  if (!role) return setStatus(candidateProfileStatus, 'Select the role you are looking for.', true);
+  if (headline.length < 3) return setStatus(candidateProfileStatus, 'Add a short professional headline.', true);
+  if ((isPublic || contactEmail) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    return setStatus(candidateProfileStatus, 'Enter a valid public contact email.', true);
+  }
+  if (contactMobile && !/^\d{10}$/.test(contactMobile)) {
+    return setStatus(candidateProfileStatus, 'Enter a 10-digit public contact phone number.', true);
+  }
+
+  const saveButton = candidateProfileForm.querySelector('button[type=submit]');
+  saveButton.disabled = true;
+  const { data, error } = await db.from('candidate_profiles').upsert({
+    user_id: currentProfile.id,
+    display_name: displayName,
+    role,
+    headline,
+    location: document.getElementById('candidateLocation').value.trim(),
+    experience: document.getElementById('candidateExperience').value.trim(),
+    skills: document.getElementById('candidateSkills').value.trim(),
+    summary: document.getElementById('candidateSummary').value.trim(),
+    contact_email: contactEmail,
+    contact_mobile: contactMobile,
+    is_public: isPublic,
+    publication_consent: isPublic
+  }, { onConflict: 'user_id' }).select('*').single();
+  saveButton.disabled = false;
+
+  if (error) return setStatus(candidateProfileStatus, `Could not save your candidate profile: ${error.message}`, true);
+  if (!data) return setStatus(candidateProfileStatus, 'Your candidate profile was not saved. Please try again.', true);
+  currentCandidateProfile = data;
+  candidateProfileLoadError = '';
+  setStatus(candidateProfileStatus, isPublic
+    ? 'Your profile is published in the candidate directory.'
+    : 'Your profile is saved privately. Publish it whenever you are ready.');
+  await loadCandidateDirectory();
+});
 
 signupForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -1209,6 +1516,9 @@ document.getElementById('backToUserLogin').addEventListener('click', () => {
     event.target.value = event.target.value.replace(/\D/g, '').slice(0, 4);
   });
 });
+document.getElementById('candidateContactMobile').addEventListener('input', (event) => {
+  event.target.value = event.target.value.replace(/\D/g, '').slice(0, 10);
+});
 
 profileToggle.addEventListener('click', () => {
   renderAccount();
@@ -1283,7 +1593,14 @@ if (db) {
 }
 
 renderJobs();
-loadProfile().then(renderAccount);
+loadCandidateDirectory();
+loadProfile().then(() => {
+  renderAccount();
+  if (location.hash === '#admin-candidates/new' && currentProfile?.is_admin) {
+    adminSection.hidden = true;
+    adminCandidatePage.hidden = false;
+  }
+});
 loadDailyQuestion();
 fetchJobs().then(() => {
   const sharedJobId = new URLSearchParams(location.search).get('job');
